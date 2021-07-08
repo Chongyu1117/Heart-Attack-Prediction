@@ -1,4 +1,4 @@
-# capstone-project-Chongyu1117
+# Heart-Attack-Prediction
 
 The project focused on the heart attack prediction. Done by Chongyu Qu, Camille Duan.<br/>
 Chongyu Qu contribution: Data preprocessing, feature plots and correlation matrix plot
