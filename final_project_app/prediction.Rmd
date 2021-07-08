@@ -1,0 +1,83 @@
+---
+title: "final"
+author: "Camille Duan"
+date: "5/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+heart_data <- read_csv('data/heart.csv')
+
+heart_data <- as.data.frame(heart_data)
+
+#Renaming columns.
+data_col_names <- c('Age', 'Sex', 'Chest Pain Type', 'Resting Blood Pressure', 'Cholesterol', 'Fasting Blood Sugar', 'Resting ECG', 'Max. Heart Rate',
+                    'Exercise Induced Angina', 'Previous Peak', 'Slope', 'No. Major Blood Vessels', 'Thal Rate', 'Condition')
+colnames(heart_data) <- data_col_names
+```
+
+Splitting test and train 
+
+```{r}
+smp_size <- floor(0.8 * nrow(heart_data))
+
+## set the seed to make your partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(heart_data)), size = smp_size)
+
+train <- heart_data[train_ind, ]
+test <- heart_data[-train_ind, ]
+```
+
+Fitting the model 
+
+
+```{r}
+glm.fit <- glm(Condition ~ Age + Sex + `Chest Pain Type` + `Max. Heart Rate`, data = train, family = binomial)
+summary(glm.fit)
+```
+
+Check the fitting results 
+```{r}
+# glm.probs now is the prediction of the training data 
+glm.probs <- predict(glm.fit,type = "response")
+glm.pred <- ifelse(glm.probs > 0.5, 1, 0)
+truth = train$Condition
+table(glm.pred,truth)
+
+```
+
+```{r}
+library(caret)
+
+# define training control
+train_control <- trainControl(method = "cv", number = 10)
+train$Condition = as.factor(train$Condition)
+# train the model on training set
+model <- train(Condition ~ Age + Sex + `Chest Pain Type` + `Max. Heart Rate`, 
+               data = train,
+               trControl = train_control,
+               method = "glm",
+               family=binomial())
+
+# print cv scores
+summary(model)
+```
+
+```{r}
+
+save(glm.fit, file = "model/logistic.rda")
+```
+
+```{r}
+pred <- prediction(glm.pred, Condition)
+perf <- performance(pred, "tpr", "fpr")
+perf
+#> A performance instance
+#>   'False positive rate' vs. 'True positive rate' (alpha: 'Cutoff')
+#>   for 10 cross validation runs
+plot(perf,
+     avg="threshold",
+     spread.estimate="boxplot")
+```
+
